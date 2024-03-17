@@ -1,4 +1,3 @@
-// Assuming the `pinyin` library is imported and bundled using Webpack
 const pinyin = require('pinyin');
 
 // Function to find text nodes in a document
