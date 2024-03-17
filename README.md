@@ -1,2 +1,2 @@
-# pinyin-extension
+# pinyin overlay
 Puts pinyin above Chinese text.
