@@ -9,5 +9,5 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     // Directly send a message to the content script, no need to use executeScript here for the message sending
-    chrome.tabs.sendMessage(tab.id, { action: "convertSelectionToPinyin", text: info.selectionText || '' });
+    chrome.tabs.sendMessage(tab.id, { action: "convertSelectionToPinyin" });
 });
