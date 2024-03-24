@@ -14,12 +14,19 @@ function findTextNodes(element) {
     return nodes;
 }
 
-// Function to convert Chinese text to Pinyin and log to console
-function convertToPinyinAndLog(textNodes) {
+// Function to convert Chinese text to Pinyin and display it above the text
+function convertToPinyinAndDisplay(textNodes) {
     textNodes.forEach((node) => {
         const chineseText = node.nodeValue;
-        const pinyinResult = pinyin(chineseText);
-        console.log(pinyinResult.join(' ')); // Join the Pinyin array and log it
+        const pinyinResult = pinyin(chineseText, {style: pinyin.STYLE_TONE}).join(' ');
+
+        // Create a new span element for the Pinyin text
+        const pinyinElement = document.createElement('span');
+        pinyinElement.style.cssText = 'display:block;'; // Ensure it displays above the text
+        pinyinElement.textContent = pinyinResult;
+
+        // Insert the Pinyin span before the original text node
+        node.parentNode.insertBefore(pinyinElement, node);
     });
 }
 
@@ -35,7 +42,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         const textNodes = findTextNodes(document.body); // Get all text nodes
-        convertToPinyinAndLog(textNodes); // Convert all found text nodes to Pinyin
+        convertToPinyinAndDisplay(textNodes); // Convert all found text nodes to Pinyin and display above the text
         sendResponse({result: "Conversion successful"});
     }
 });
