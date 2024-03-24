@@ -1,3 +1,4 @@
+// content.js
 import pinyin from "pinyin";
 
 // Function to find text nodes in a document
@@ -22,6 +23,19 @@ function convertToPinyinAndLog(textNodes) {
     });
 }
 
-// Run the above functions on the document body to find text and convert it
-const textNodes = findTextNodes(document.body);
-convertToPinyinAndLog(textNodes);
+// Listening for the message from the background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "convertSelectionToPinyin") {
+        let textToConvert = message.text;
+
+        // If no text is selected, use the entire body text
+        if (!textToConvert) {
+            const bodyText = document.body.innerText || document.body.textContent;
+            textToConvert = bodyText;
+        }
+
+        const textNodes = findTextNodes(document.body); // Get all text nodes
+        convertToPinyinAndLog(textNodes); // Convert all found text nodes to Pinyin
+        sendResponse({result: "Conversion successful"});
+    }
+});

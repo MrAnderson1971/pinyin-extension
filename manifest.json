@@ -3,9 +3,16 @@
   "name": "Pinyin Overlay",
   "version": "1.0",
   "description": "Displays Pinyin above Chinese characters on web pages.",
-  "permissions": ["activeTab"],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icon16.png",
       "48": "icon48.png",

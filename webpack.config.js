@@ -1,10 +1,13 @@
 const path = require('path');
 
 module.exports = {
-    entry: './content.js',
+    entry: {
+        content: './content.js', // Entry point for the content script
+        background: './background.js' // Entry point for the background script
+    },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'content.bundle.js', // Output bundle file
+        filename: '[name].bundle.js', // Output bundle files based on entry point names
     },
     module: {
         rules: [
