@@ -1,4 +1,4 @@
-const pinyin = require('pinyin');
+import pinyin from "pinyin";
 
 // Function to find text nodes in a document
 function findTextNodes(element) {
@@ -17,10 +17,7 @@ function findTextNodes(element) {
 function convertToPinyinAndLog(textNodes) {
     textNodes.forEach((node) => {
         const chineseText = node.nodeValue;
-        const pinyinResult = pinyin(chineseText, {
-            style: pinyin.STYLE_TONE, // Choose the style you prefer
-            heteronym: false // Set to true if you want to include multiple pronunciations
-        });
+        const pinyinResult = pinyin(chineseText);
         console.log(pinyinResult.join(' ')); // Join the Pinyin array and log it
     });
 }
