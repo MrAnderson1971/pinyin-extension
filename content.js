@@ -25,8 +25,16 @@ function convertToPinyinAndDisplay(textNodes) {
         Array.from(chineseText).forEach((char) => {
             // Check if the character is Chinese
             if (/[\u3400-\u9FBF]/.test(char)) {
-                const pinyinChar = pinyin(char, {style: pinyin.STYLE_TONE});
-                // Create a span for Pinyin
+                // Get all possible pinyin pronunciations for the character
+                const pinyinOptions = pinyin(char, {
+                    style: pinyin.STYLE_TONE,
+                    heteronym: true
+                }).flat();
+
+                // Join all pinyin pronunciations with a line break
+                const pinyinChar = pinyinOptions.join('<br>');
+
+                // Create a span for Pinyin, displayed vertically
                 newContent += `<span style="display: inline-block; text-align: center;">
                                     <span style="display: block; font-size: smaller; color: #666;">${pinyinChar}</span>
                                     ${char}
