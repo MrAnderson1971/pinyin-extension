@@ -1,7 +1,5 @@
-// content.js
 import pinyin from "pinyin";
 
-// Function to find text nodes in a document
 function findTextNodes(element) {
     let nodes = [];
     for (element = element.firstChild; element; element = element.nextSibling) {
@@ -14,34 +12,47 @@ function findTextNodes(element) {
     return nodes;
 }
 
-// Function to convert Chinese text to Pinyin with tones and display it above each character
 function convertToPinyinAndDisplay(textNodes) {
     textNodes.forEach((textNode) => {
-        let newContent = '';
         const parentNode = textNode.parentNode;
-        const chineseText = textNode.nodeValue;
+        const fullText = textNode.nodeValue;
 
-        // Convert each character to Pinyin and wrap it in a span with the original character
-        Array.from(chineseText).forEach((char) => {
-            // Check if the character is Chinese
-            if (/[\u3400-\u9FBF]/.test(char)) {
-                // Get all possible pinyin pronunciations for the character
-                const pinyinOptions = pinyin(char, {
+        // Split the text into sentences or meaningful segments for better context
+        // Here we split by periods for simplicity, adjust according to your needs
+        const sentences = fullText.split(/([。！？\n])/).filter(Boolean);
+
+        let newContent = '';
+
+        sentences.forEach((sentence) => {
+            if (/[\u3400-\u9FBF]/.test(sentence)) {
+
+                // Convert the entire sentence to Pinyin, assuming the library can handle context
+                const pinyinSentence = pinyin(sentence, {
                     style: pinyin.STYLE_TONE,
-                    heteronym: true
-                }).flat();
+                    heteronym: true,
+                    segment: true
+                });
 
-                // Join all pinyin pronunciations with a line break
-                const pinyinChar = pinyinOptions.join('<br>');
+                // Since sentence is a string, use Array.from to iterate over each character
+                let pinyinIndex = 0;
+                Array.from(sentence).forEach((originalChar) => {
+                    if (/[\u3400-\u9FbF]/.test(originalChar)) {
+                        const pinyinCharData = pinyinSentence[pinyinIndex];
+                        const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
-                // Create a span for Pinyin, displayed vertically
-                newContent += `<span style="display: inline-block; text-align: center;">
-                                    <span style="display: block; font-size: smaller; color: #666;">${pinyinChar}</span>
-                                    ${char}
-                               </span>`;
+                        newContent += `<span style="display: inline-block; text-align: center;">
+                           <span style="display: block; font-size: smaller; color: #666;">${pinyinWord}</span>
+                           ${originalChar}
+                       </span>`;
+                    } else {
+                        // Directly append non-Chinese characters
+                        newContent += originalChar;
+                    }
+                    pinyinIndex++;
+                });
             } else {
-                // Non-Chinese characters are appended as-is
-                newContent += char;
+                // Non-Chinese sentences are appended as-is
+                newContent += sentence;
             }
         });
 
@@ -51,11 +62,10 @@ function convertToPinyinAndDisplay(textNodes) {
     });
 }
 
-// Listening for the message from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "convertSelectionToPinyin") {
-        const textNodes = findTextNodes(document.body); // Get all text nodes
-        convertToPinyinAndDisplay(textNodes); // Convert all found text nodes to Pinyin and display above the text
+        const textNodes = findTextNodes(document.body);
+        convertToPinyinAndDisplay(textNodes);
         sendResponse({result: "Conversion successful"});
     }
 });
