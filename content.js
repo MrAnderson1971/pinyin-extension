@@ -1,3 +1,4 @@
+// content.js
 import pinyin from "pinyin";
 
 function findTextNodes(element) {
@@ -13,6 +14,12 @@ function findTextNodes(element) {
 }
 
 function convertToPinyinAndDisplay(textNodes) {
+    // Check if any .pinyinOverlayText elements already exist
+    if (document.querySelector('span.pinyinOverlayText')) {
+        console.log("Pinyin already converted");
+        return; // Exit the function early if conversion has been done
+    }
+
     textNodes.forEach((textNode) => {
         const parentNode = textNode.parentNode;
         const fullText = textNode.nodeValue;
@@ -40,7 +47,7 @@ function convertToPinyinAndDisplay(textNodes) {
                         const pinyinCharData = pinyinSentence[pinyinIndex];
                         const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
-                        newContent += `<span style="display: inline-block; text-align: center;">
+                        newContent += `<span style="display: inline-block; text-align: center;" class="pinyinOverlayText">
                            <span style="display: block; font-size: smaller; color: #666;">${pinyinWord}</span>
                            ${originalChar}
                        </span>`;

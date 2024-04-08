@@ -2,7 +2,7 @@
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "convertToPinyin",
-        title: "Convert to Pinyin",
+        title: "Convert to Pinyin | 换成拼音",
         contexts: ["all"] // This makes the context menu appear in all contexts
     });
 });
