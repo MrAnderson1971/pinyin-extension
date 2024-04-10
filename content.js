@@ -1,6 +1,11 @@
 // content.js
 import pinyin from "pinyin";
 
+// Regex to capture supported Chinese characters
+const chineseCharRegexBase = "[\u3400-\u9FBF]";
+const excludeChinese = new RegExp(`(${chineseCharRegexBase}+)`, "u");
+const detectChinese = new RegExp(chineseCharRegexBase, "u");
+
 function findTextNodes(element) {
     let nodes = [];
     const walker = document.createTreeWalker(
@@ -35,13 +40,12 @@ function convertToPinyinAndDisplay(textNodes) {
         const fullText = textNode.nodeValue;
 
         // Here we split by any non-Chinese character
-        // Here we split by any non-Chinese character
-        const sentences = fullText.split(/([^\u4e00-\u9fa5]+)/).filter(Boolean);
+        const sentences = fullText.split(excludeChinese).filter(Boolean);
 
         let newContent = '';
 
         sentences.forEach((sentence) => {
-            if (/[\u3400-\u9FBF]/.test(sentence)) {
+            if (detectChinese.test(sentence)) {
                 // Convert the entire sentence to Pinyin
                 const pinyinSentence = pinyin(sentence, {
                     style: pinyin.STYLE_TONE,
@@ -51,7 +55,7 @@ function convertToPinyinAndDisplay(textNodes) {
 
                 let pinyinIndex = 0;
                 Array.from(sentence).forEach((originalChar) => {
-                    if (/[\u3400-\u9FbF]/.test(originalChar)) {
+                    if (detectChinese.test(originalChar)) {
                         const pinyinCharData = pinyinSentence[pinyinIndex++];
                         const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
