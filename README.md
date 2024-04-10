@@ -1,10 +1,38 @@
-# pinyin overlay
-Puts pinyin above Chinese text. Now supports heteronyms.
+![Screenshot](https://lh3.googleusercontent.com/-2wep4NK9fbYGM-k-xaP01HdxfFXbRD3r32DfwTvTCubgq3CCDdZ0Q85FjOSfPzdnY-8YtEZpJTk1i0ltTUrYN1Dmw=s800-w800-h500)
+# Pinyin Overlay | 拼音叠加
 
-把拼音显示在中文词上。现在支持多音词。
+## English
 
-## Sample text 测试文段
-重要的会议在重庆的一个轻工业区轻松举行，会上领导强调了发展经济的重点，并提出了加强管理、提高产品质量的建议，希望通过科技创新来解决重金属污染问题，使城市更宜居。
+### Description
+Pinyin Overlay is a Chrome extension that overlays Pinyin transliterations directly above Chinese characters on web pages, facilitating reading and language learning.
 
-## Correct pinyin 正确的拼音
-Zhòngyào de huìyì zài Chóngqìng de yīgè qīng gōngyè qū qīngsōng jǔxíng, huì shàng lǐngdǎo qiángdiào le fāzhǎn jīngjì de zhòngdiǎn, bìng tíchū le jiāqiáng guǎnlǐ, tígāo chǎnpǐn zhìliàng de jiànyì, xīwàng tōngguò kējì chuàngxīn lái jiějué zhòng jīnshǔ wūrǎn wèntí, shǐ chéngshì gèng yíjū.
+### Features
+- Automatically converts Chinese characters on a webpage to Pinyin.
+- Displays Pinyin above Chinese characters without altering the webpage layout.
+- Supports Simplified and Traditional characters.
+
+### Installation
+To install Pinyin Overlay:
+1. Visit [this link](https://chromewebstore.google.com/detail/pinyin-overlay-%E6%8B%BC%E9%9F%B3%E5%8F%A0%E5%8A%A0/eokiejenkmnfboflfklbbcdogfhpjccl) and click "Add to Chrome".
+
+### Usage
+After installation, right-click on a webpage containing Chinese text and select "Convert to Pinyin" from the context menu to activate the overlay.
+
+---
+
+## 中文
+
+### 描述
+拼音叠加是一个Chrome扩展程序，可以在网页中文字符上直接叠加显示拼音，帮助阅读和学习语言。
+
+### 特点
+- 自动将网页上的中文字符转换为拼音。
+- 在不改变网页布局的情况下，在中文字符上显示拼音。
+- 支持简体字和繁体字。
+
+### 安装
+安装拼音叠加：
+1. 访问[此链接
+](https://chromewebstore.google.com/detail/pinyin-overlay-%E6%8B%BC%E9%9F%B3%E5%8F%A0%E5%8A%A0/eokiejenkmnfboflfklbbcdogfhpjccl)并点击“添加到Chrome”。
+### 使用方法
+安装后，在包含中文文本的网页上右键点击，从上下文菜单中选择“转换为拼音”以激活覆盖层。
