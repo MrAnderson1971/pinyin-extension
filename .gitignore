@@ -13,13 +13,6 @@ npm-debug.log*
 # Environment files
 *.env
 
-# Package lock files can be included or excluded depending on your preference
-# package-lock.json
-
-# If you have a build directory that is not shown, you might want to include it here as well
-# build/
-
-# You might also want to ignore log files or other temporary files that are not shown
 *.log
 *.tmp
 *.temp
