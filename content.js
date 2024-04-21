@@ -1,5 +1,6 @@
 // content.js
 import pinyin from "pinyin";
+import chroma from "chroma-js";
 
 // Regex to capture supported Chinese characters
 const chineseCharRegexBase = "[\u3400-\u9FBF]";
@@ -39,6 +40,9 @@ function convertToPinyinAndDisplay(textNodes) {
         const parentNode = textNode.parentNode;
         const fullText = textNode.nodeValue;
 
+        // Retrieve the original color and desaturate it
+        const lessSaturatedColor = adjustColor(window.getComputedStyle(parentNode).color);
+
         // Here we split by any non-Chinese character
         const sentences = fullText.split(excludeChinese).filter(Boolean);
 
@@ -46,7 +50,6 @@ function convertToPinyinAndDisplay(textNodes) {
 
         sentences.forEach((sentence) => {
             if (detectChinese.test(sentence)) {
-                // Convert the entire sentence to Pinyin
                 const pinyinSentence = pinyin(sentence, {
                     style: pinyin.STYLE_TONE,
                     heteronym: true,
@@ -60,24 +63,34 @@ function convertToPinyinAndDisplay(textNodes) {
                         const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
                         newContent += `<span style="display: inline-block; text-align: center;" class="pinyinOverlayText">
-                            <span style="display: block; font-size: smaller; color: #666;">${pinyinWord}</span>
-                            ${originalChar}
-                        </span>`;
+                    <span style="display: block; font-size: smaller; color: ${lessSaturatedColor};">&nbsp;${pinyinWord}&nbsp;</span>
+                    ${originalChar}
+                </span>`; // Adding a non-breaking space character (&nbsp) so there's space between pinyin words.
                     } else {
-                        // Directly append non-Chinese characters
                         newContent += originalChar;
                     }
                 });
             } else {
-                // Non-Chinese sentences are appended as-is
                 newContent += sentence;
             }
         });
 
-        // Replace the original text node with the new HTML content
         const fragment = document.createRange().createContextualFragment(newContent);
         parentNode.replaceChild(fragment, textNode);
     });
+}
+
+// Adjusts color to make it closer to gray.
+function adjustColor(color, desaturationLevel = 0.5, lightnessLevel = 0.8) {
+    const luminance = chroma(color).luminance();
+
+    // Adjust for very dark or very bright colors
+    if (luminance < 0.1) { // very dark colors
+        return chroma(100, 100, 100).css(); // dark gray
+    } else if (luminance > 0.9) { // very bright colors
+        return chroma(200, 200, 200).css(); // light gray
+    }
+    return chroma(color).desaturate(desaturationLevel).brighten(lightnessLevel).css();
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

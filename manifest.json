@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pinyin Overlay | 拼音叠加",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Displays Pinyin above Chinese characters on web pages.\n在网页上把拼音显示在中文词上。",
   "permissions": [
     "activeTab",

@@ -1,4 +1,4 @@
- {
+{
   "name": "pinyin-extension",
   "version": "1.0.0",
   "description": "Puts pinyin above Chinese text.",
@@ -18,6 +18,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "chroma-js": "^2.4.2",
     "pinyin": "^4.0.0-alpha.0",
     "segmentit": "^2.0.3"
   }
