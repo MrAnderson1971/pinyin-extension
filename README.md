@@ -7,7 +7,7 @@
 Pinyin Overlay is a Chrome extension that overlays Pinyin transliterations directly above Chinese characters on web pages, facilitating reading and language learning.
 
 ### Features
-- Automatically converts Chinese characters on a webpage to Pinyin.
+- Right-click to convert Chinese characters on a webpage to pinyin.
 - Displays Pinyin above Chinese characters without altering the webpage layout.
 - Supports Simplified and Traditional characters.
 
@@ -26,7 +26,7 @@ After installation, right-click on a webpage containing Chinese text and select 
 拼音叠加是一个Chrome扩展程序，可以在网页中文字符上直接叠加显示拼音，帮助阅读和学习语言。
 
 ### 特点
-- 自动将网页上的中文字符转换为拼音。
+- 在网页上右键点击以将中文字符转换为拼音。
 - 在不改变网页布局的情况下，在中文字符上显示拼音。
 - 支持简体字和繁体字。
 
