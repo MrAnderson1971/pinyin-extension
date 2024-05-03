@@ -64,7 +64,7 @@ function convertToPinyinAndDisplay(textNodes) {
 
                         newContent += `<span style="display: inline-block; text-align: center;" class="pinyinOverlayText">
                     <span style="display: block; font-size: smaller; color: ${lessSaturatedColor};">&nbsp;${pinyinWord}&nbsp;</span>
-                    ${originalChar}
+                    <span style="display: block;">${originalChar}</span>
                 </span>`; // Adding a non-breaking space character (&nbsp) so there's space between pinyin words.
                     } else {
                         newContent += originalChar;
