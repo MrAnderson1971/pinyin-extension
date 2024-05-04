@@ -62,9 +62,9 @@ function convertToPinyinAndDisplay(textNodes) {
                         const pinyinCharData = pinyinSentence[pinyinIndex++];
                         const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
-                        newContent += `<span style="display: inline-block; text-align: center;" class="pinyinOverlayText">
-                    <span style="display: block; font-size: smaller; color: ${lessSaturatedColor};">&nbsp;${pinyinWord}&nbsp;</span>
-                    <span style="display: block;">${originalChar}</span>
+                        newContent += `<span style="display: inline-flex; flex-direction: column; text-align: center;" class="pinyinOverlayText">
+                    <span style="font-size: smaller; color: ${lessSaturatedColor};">&nbsp;${pinyinWord}&nbsp;</span>
+                    <span>${originalChar}</span>
                 </span>`; // Adding a non-breaking space character (&nbsp) so there's space between pinyin words.
                     } else {
                         newContent += originalChar;
