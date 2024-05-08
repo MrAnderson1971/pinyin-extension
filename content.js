@@ -13,7 +13,7 @@ function findTextNodes(element) {
         element,
         NodeFilter.SHOW_TEXT,
         {
-            acceptNode: function(node) {
+            acceptNode: function (node) {
                 // Only include text nodes not contained within a 'pinyinOverlayText' span
                 let ancestor = node.parentNode;
                 while (ancestor && ancestor !== document) {
@@ -28,7 +28,7 @@ function findTextNodes(element) {
         false
     );
 
-    while(walker.nextNode()) {
+    while (walker.nextNode()) {
         nodes.push(walker.currentNode);
     }
 
@@ -63,7 +63,7 @@ function convertToPinyinAndDisplay(textNodes) {
                         const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
                         newContent += `<span style="display: inline-flex; flex-direction: column; text-align: center;" class="pinyinOverlayText">
-                    <span style="font-size: smaller; color: ${lessSaturatedColor};">&nbsp;${pinyinWord}&nbsp;</span>
+                    <span style="font-size: smaller; color: ${lessSaturatedColor}; font-family: sans-serif">&nbsp;${pinyinWord}&nbsp;</span>
                     <span>${originalChar}</span>
                 </span>`; // Adding a non-breaking space character (&nbsp) so there's space between pinyin words.
                     } else {
