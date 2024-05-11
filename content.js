@@ -58,17 +58,13 @@ function convertToPinyinAndDisplay(textNodes) {
 
                 let pinyinIndex = 0;
                 Array.from(sentence).forEach((originalChar) => {
-                    if (detectChinese.test(originalChar)) {
-                        const pinyinCharData = pinyinSentence[pinyinIndex++];
-                        const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
+                    const pinyinCharData = pinyinSentence[pinyinIndex++];
+                    const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
 
-                        newContent += `<span style="display: inline-flex; flex-direction: column; text-align: center;" class="pinyinOverlayText">
-                    <span style="font-size: smaller; color: ${lessSaturatedColor}; font-family: sans-serif">&nbsp;${pinyinWord}&nbsp;</span>
-                    <span>${originalChar}</span>
-                </span>`; // Adding a non-breaking space character (&nbsp) so there's space between pinyin words.
-                    } else {
-                        newContent += originalChar;
-                    }
+                    newContent += `<span class="pinyinOverlayText">
+                            <span style="color: ${lessSaturatedColor}">&nbsp;${pinyinWord}&nbsp;</span>
+                            <span>${originalChar}</span>
+                        </span>`;
                 });
             } else {
                 newContent += sentence;
@@ -93,8 +89,28 @@ function adjustColor(color, desaturationLevel = 0.5, lightnessLevel = 0.8) {
     return chroma(color).desaturate(desaturationLevel).brighten(lightnessLevel).css();
 }
 
+function injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .pinyinOverlayText {
+            display: inline-flex;
+            flex-direction: column;
+            text-align: center;
+            position: relative;
+            top: -1em;
+        }
+        
+        .pinyinOverlayText span {
+            font-size: smaller;
+            font-family: sans-serif;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "convertSelectionToPinyin") {
+        injectStyles();
         const textNodes = findTextNodes(document.body);
         convertToPinyinAndDisplay(textNodes);
         sendResponse({result: "Conversion successful"});
