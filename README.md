@@ -1,4 +1,4 @@
-![Screenshot](https://lh3.googleusercontent.com/-2wep4NK9fbYGM-k-xaP01HdxfFXbRD3r32DfwTvTCubgq3CCDdZ0Q85FjOSfPzdnY-8YtEZpJTk1i0ltTUrYN1Dmw=s800-w800-h500)
+![Screenshot](https://github.com/MrAnderson1971/pinyin-extension/blob/main/screenshot.png?raw=true)
 # Pinyin Overlay | 拼音叠加
 
 ## English
