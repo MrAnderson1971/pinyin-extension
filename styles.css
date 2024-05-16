@@ -1,0 +1,13 @@
+/* styles.css */
+.pinyinOverlayText {
+    display: inline-flex;
+    flex-direction: column;
+    text-align: center;
+    position: relative;
+    top: -1em;
+}
+
+.pinyinOverlayText span {
+    font-size: smaller;
+    font-family: sans-serif;
+}
