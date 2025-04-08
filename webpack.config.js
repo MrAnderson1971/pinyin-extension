@@ -1,13 +1,14 @@
 const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
-        content: './content.js', // Entry point for the content script
-        background: './background.js' // Entry point for the background script
+        content: './content.js',
+        background: './background.js'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].bundle.js', // Output bundle files based on entry point names
+        filename: '[name].js'
     },
     module: {
         rules: [
@@ -27,5 +28,15 @@ module.exports = {
             },
         ],
     },
+    plugins: [
+        new CopyPlugin({
+            patterns: [
+                { from: 'manifest.json', to: 'manifest.json' },
+                { from: 'icon16.png', to: 'icon16.png' },
+                { from: 'icon48.png', to: 'icon48.png' },
+                { from: 'icon128.png', to: 'icon128.png' }
+            ],
+        }),
+    ],
     devtool: 'source-map'
 };

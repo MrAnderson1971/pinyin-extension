@@ -1,11 +1,10 @@
 // content.js
-import pinyin from "pinyin";
 import chroma from "chroma-js";
 
 // Regex to capture supported Chinese characters
 const chineseCharRegexBase = "[\u3400-\u9FBF]";
-const excludeChinese = new RegExp(`(${chineseCharRegexBase}+)`, "u");
-const detectChinese = new RegExp(chineseCharRegexBase, "u");
+export const excludeChinese = new RegExp(`(${chineseCharRegexBase}+)`, "u");
+export const detectChinese = new RegExp(chineseCharRegexBase, "u");
 
 function findTextNodes(element) {
     let nodes = [];
@@ -22,62 +21,158 @@ function findTextNodes(element) {
                     }
                     ancestor = ancestor.parentNode;
                 }
+
+                // Skip empty text nodes
+                if (!node.nodeValue.trim()) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+
+                // Only process nodes that contain Chinese characters
+                if (!detectChinese.test(node.nodeValue)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+
                 return NodeFilter.FILTER_ACCEPT;
             }
-        },
-        false
+        }
     );
 
     while (walker.nextNode()) {
         nodes.push(walker.currentNode);
     }
 
-    return nodes;
-}
-
-function convertToPinyinAndDisplay(textNodes) {
-    textNodes.forEach((textNode) => {
-        const parentNode = textNode.parentNode;
-        const fullText = textNode.nodeValue;
-
-        // Retrieve the original color and desaturate it
-        const lessSaturatedColor = adjustColor(window.getComputedStyle(parentNode).color);
-
-        // Here we split by any non-Chinese character
-        const sentences = fullText.split(excludeChinese).filter(Boolean);
-
-        let newContent = '';
-
-        sentences.forEach((sentence) => {
-            if (detectChinese.test(sentence)) {
-                const pinyinSentence = pinyin(sentence, {
-                    style: pinyin.STYLE_TONE,
-                    heteronym: true,
-                    segment: true
-                });
-
-                let pinyinIndex = 0;
-                Array.from(sentence).forEach((originalChar) => {
-                    const pinyinCharData = pinyinSentence[pinyinIndex++];
-                    const pinyinWord = pinyinCharData ? pinyinCharData[0] : '';
-
-                    newContent += `<span class="pinyinOverlayText">
-                    <span style="color: ${lessSaturatedColor};">&nbsp;${pinyinWord}&nbsp;</span>
-                    <span>${originalChar}</span>
-                </span>`; // Adding a non-breaking space character (&nbsp) so there's space between pinyin words.
-                });
-            } else {
-                newContent += sentence;
-            }
+    // Add all found nodes to processing queue and start processing
+    if (nodes.length > 0) {
+        nodes.forEach(node => {
+            addNodeToQueue(node);
         });
 
-        const fragment = document.createRange().createContextualFragment(newContent);
-        parentNode.replaceChild(fragment, textNode);
+        // Start processing if not already active
+        if (!pinyinProcessingActive) {
+            pinyinProcessingActive = true;
+            processPinyinBatchWithYield();
+        }
+    }
+
+    return nodes.length; // Return count of nodes found
+}
+
+const pinyinNodeQueue = [];
+let pinyinProcessingActive = false;
+let pinyinProcessingIndex = 0;
+let pinyinProcessedCount = 0;
+
+// Time limits for processing batches
+const PINYIN_MAX_PROCESSING_TIME = 50; // ms before yielding to UI thread
+const PINYIN_UI_REFRESH_DELAY = 16; // ms pause for UI refresh (1 frame @60fps)
+
+/**
+ * Adds a text node to the processing queue
+ * @param {Text} textNode
+ */
+function addNodeToQueue(textNode) {
+    if (!textNode || !textNode.nodeValue || !textNode.parentNode) {
+        return;
+    }
+
+    pinyinNodeQueue.push({
+        node: textNode,
+        text: textNode.nodeValue,
+        parent: textNode.parentNode
     });
 }
 
+/**
+ * Process nodes in time-limited batches with UI thread yielding
+ */
+function processPinyinBatchWithYield() {
+    // Exit conditions
+    if (pinyinNodeQueue.length === 0) {
+        pinyinProcessingActive = false;
+        console.log(`Pinyin processing completed: ${pinyinProcessedCount} nodes processed`);
+        return;
+    }
+
+    const startTime = performance.now();
+    const nodesToProcess = [];
+    const textsToProcess = [];
+
+    // Collect as many unprocessed nodes as possible within the time limit
+    while (pinyinProcessingIndex < pinyinNodeQueue.length &&
+    performance.now() - startTime < PINYIN_MAX_PROCESSING_TIME) {
+
+        const nodeData = pinyinNodeQueue[pinyinProcessingIndex++];
+
+        // Skip nodes no longer in DOM
+        if (!nodeData.node.parentNode) {
+            continue;
+        }
+
+        nodesToProcess.push(nodeData);
+        textsToProcess.push(nodeData.text);
+    }
+
+    // If we reached the end of the queue, reset index
+    if (pinyinProcessingIndex >= pinyinNodeQueue.length) {
+        pinyinProcessingIndex = 0;
+        pinyinNodeQueue.length = 0; // Clear the processed queue
+    }
+
+    // If no nodes to process, yield and continue
+    if (nodesToProcess.length === 0) {
+        setTimeout(processPinyinBatchWithYield, PINYIN_UI_REFRESH_DELAY);
+        return;
+    }
+
+    // Send batch to background script for processing
+    chrome.runtime.sendMessage(
+        {
+            action: 'processPinyinBatch',
+            textBatch: textsToProcess,
+            nodeInfo: nodesToProcess.map(data => ({
+                parentColor: window.getComputedStyle(data.parent).color
+            }))
+        },
+        response => {
+            if (!response || response.error) {
+                console.error("Error processing batch:", response?.error || "No response");
+
+                // Continue processing with the next batch
+                setTimeout(processPinyinBatchWithYield, PINYIN_UI_REFRESH_DELAY);
+                return;
+            }
+
+            // Apply results to nodes
+            const results = response.results;
+            for (let i = 0; i < nodesToProcess.length; i++) {
+                const nodeData = nodesToProcess[i];
+                const htmlContent = results[i];
+
+                // Skip if node is no longer in DOM
+                if (!nodeData.node.parentNode) {
+                    continue;
+                }
+
+                // Create and insert processed content
+                if (htmlContent) {
+                    try {
+                        const fragment = document.createRange().createContextualFragment(htmlContent);
+                        nodeData.parent.replaceChild(fragment, nodeData.node);
+                        pinyinProcessedCount++;
+                    } catch (e) {
+                        console.error("Error replacing node:", e);
+                    }
+                }
+            }
+
+            // Yield to UI thread before continuing
+            setTimeout(processPinyinBatchWithYield, PINYIN_UI_REFRESH_DELAY);
+        }
+    );
+}
+
 // Adjusts color to make it closer to gray.
-function adjustColor(color, desaturationLevel = 0.5, lightnessLevel = 0.8) {
+export function adjustColor(color, desaturationLevel = 0.5, lightnessLevel = 0.8) {
     const luminance = chroma(color).luminance();
 
     // Adjust for very dark or very bright colors
@@ -90,7 +185,13 @@ function adjustColor(color, desaturationLevel = 0.5, lightnessLevel = 0.8) {
 }
 
 function injectStyles() {
+    // Check if styles already injected
+    if (document.getElementById('pinyin-overlay-styles')) {
+        return;
+    }
+
     const style = document.createElement('style');
+    style.id = 'pinyin-overlay-styles';
     style.textContent = `
 .pinyinOverlayText, .pinyinOverlayText > span {
     margin: 0;
@@ -116,9 +217,10 @@ function injectStyles() {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "convertSelectionToPinyin") {
+        console.log("HERE");
         injectStyles();
-        const textNodes = findTextNodes(document.body);
-        convertToPinyinAndDisplay(textNodes);
-        sendResponse({result: "Conversion successful"});
+        const nodesFound = findTextNodes(document.body);
+        sendResponse({result: "Conversion started", nodesFound: nodesFound});
+        return true; // Keep message channel open for async response
     }
 });
