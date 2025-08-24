@@ -1,6 +1,7 @@
 // background.js
 import {adjustColor, detectChinese, excludeChinese} from "./content";
 import pinyin from "pinyin";
+import MessageSender = chrome.runtime.MessageSender;
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
@@ -10,14 +11,19 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-function injectAndConvert(tab) {
+function injectAndConvert(tab: chrome.tabs.Tab | undefined) {
+    if (!tab?.id) {
+        return;
+    }
     // Use scripting API to inject the content script into the active tab
     chrome.scripting.executeScript({
         target: {tabId: tab.id},
-        files: ['content.js'] // Updated path
+        files: ['content.js']
     }, () => {
         // After injecting the script, send a message to it
-        chrome.tabs.sendMessage(tab.id, {action: "convertSelectionToPinyin"});
+        if (tab.id != null) {
+            chrome.tabs.sendMessage(tab.id, {action: "convertSelectionToPinyin"});
+        }
     });
 }
 
@@ -31,7 +37,9 @@ chrome.action.onClicked.addListener((tab) => {
     injectAndConvert(tab);
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request: any,
+                                      sender: MessageSender,
+                                      sendResponse: (response?: any) => void): boolean => {
     // Handle batch processing of text nodes
     if (request.action === 'processPinyinBatch') {
         const textBatch = request.textBatch;
@@ -53,13 +61,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             });
 
             sendResponse({results: results});
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error processing pinyin batch:', error);
             sendResponse({error: error.message});
         }
 
         return true; // Keep message channel open
     }
+    return false;
 });
 
 /**
@@ -68,7 +77,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  * @param {string} lessSaturatedColor - The color to use for pinyin text
  * @returns {string} - HTML string with pinyin overlay
  */
-function processTextToPinyinHTML(fullText, lessSaturatedColor) {
+function processTextToPinyinHTML(fullText: string, lessSaturatedColor: string): string {
     // Split by any non-Chinese character
     const sentences = fullText.split(excludeChinese).filter(Boolean);
 

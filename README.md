@@ -18,6 +18,10 @@ To install Pinyin Overlay:
 ### Usage
 After installation, right-click on a webpage containing Chinese text and select "Convert to Pinyin" from the context menu to activate the overlay.
 
+### Build
+* `npm i`
+* `npx webpack`
+* Go to `chrome://extensions`, turn on Developer Mode, click Load unpacked, and select the `dist` folder.
 ---
 
 ## 中文

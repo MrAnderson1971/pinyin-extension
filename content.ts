@@ -1,29 +1,38 @@
 // content.js
 import chroma from "chroma-js";
+import MessageSender = chrome.runtime.MessageSender;
+
+interface PinyinNode {
+    node: Node;
+    text: string;
+    parent: Node;
+}
 
 // Regex to capture supported Chinese characters
 const chineseCharRegexBase = "[\u3400-\u9FBF]";
 export const excludeChinese = new RegExp(`(${chineseCharRegexBase}+)`, "u");
 export const detectChinese = new RegExp(chineseCharRegexBase, "u");
 
-function findTextNodes(element) {
+function findTextNodes(element: Node): number {
     let nodes = [];
     const walker = document.createTreeWalker(
         element,
         NodeFilter.SHOW_TEXT,
         {
-            acceptNode: function (node) {
+            acceptNode: function (node: Node): number {
                 // Only include text nodes not contained within a 'pinyinOverlayText' span
-                let ancestor = node.parentNode;
+                let ancestor: Node | null = node.parentNode;
                 while (ancestor && ancestor !== document) {
-                    if (ancestor.tagName === 'SPAN' && ancestor.classList.contains('pinyinOverlayText')) {
+                    if (ancestor.nodeType === Node.ELEMENT_NODE &&
+                        (ancestor as Element).tagName === 'SPAN' &&
+                        (ancestor as Element).classList.contains('pinyinOverlayText')) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     ancestor = ancestor.parentNode;
                 }
 
                 // Skip empty text nodes
-                if (!node.nodeValue.trim()) {
+                if (!node.nodeValue?.trim()) {
                     return NodeFilter.FILTER_REJECT;
                 }
 
@@ -57,7 +66,7 @@ function findTextNodes(element) {
     return nodes.length; // Return count of nodes found
 }
 
-const pinyinNodeQueue = [];
+const pinyinNodeQueue: PinyinNode[] = [];
 let pinyinProcessingActive = false;
 let pinyinProcessingIndex = 0;
 let pinyinProcessedCount = 0;
@@ -70,7 +79,7 @@ const PINYIN_UI_REFRESH_DELAY = 16; // ms pause for UI refresh (1 frame @60fps)
  * Adds a text node to the processing queue
  * @param {Text} textNode
  */
-function addNodeToQueue(textNode) {
+function addNodeToQueue(textNode: Node) {
     if (!textNode || !textNode.nodeValue || !textNode.parentNode) {
         return;
     }
@@ -94,8 +103,8 @@ function processPinyinBatchWithYield() {
     }
 
     const startTime = performance.now();
-    const nodesToProcess = [];
-    const textsToProcess = [];
+    const nodesToProcess: PinyinNode[] = [];
+    const textsToProcess: string[] = [];
 
     // Collect as many unprocessed nodes as possible within the time limit
     while (pinyinProcessingIndex < pinyinNodeQueue.length &&
@@ -104,7 +113,7 @@ function processPinyinBatchWithYield() {
         const nodeData = pinyinNodeQueue[pinyinProcessingIndex++];
 
         // Skip nodes no longer in DOM
-        if (!nodeData.node.parentNode) {
+        if (!nodeData?.node.parentNode) {
             continue;
         }
 
@@ -130,7 +139,7 @@ function processPinyinBatchWithYield() {
             action: 'processPinyinBatch',
             textBatch: textsToProcess,
             nodeInfo: nodesToProcess.map(data => ({
-                parentColor: window.getComputedStyle(data.parent).color
+                parentColor: window.getComputedStyle(data.parent as Element).color
             }))
         },
         response => {
@@ -144,13 +153,12 @@ function processPinyinBatchWithYield() {
 
             // Apply results to nodes
             const results = response.results;
-            for (let i = 0; i < nodesToProcess.length; i++) {
-                const nodeData = nodesToProcess[i];
+            nodesToProcess.forEach((nodeData, i) => {
                 const htmlContent = results[i];
 
                 // Skip if node is no longer in DOM
                 if (!nodeData.node.parentNode) {
-                    continue;
+                    return;
                 }
 
                 // Create and insert processed content
@@ -163,7 +171,7 @@ function processPinyinBatchWithYield() {
                         console.error("Error replacing node:", e);
                     }
                 }
-            }
+            });
 
             // Yield to UI thread before continuing
             setTimeout(processPinyinBatchWithYield, PINYIN_UI_REFRESH_DELAY);
@@ -172,7 +180,7 @@ function processPinyinBatchWithYield() {
 }
 
 // Adjusts color to make it closer to gray.
-export function adjustColor(color, desaturationLevel = 0.5, lightnessLevel = 0.8) {
+export function adjustColor(color: string, desaturationLevel = 0.5, lightnessLevel = 0.8) {
     const luminance = chroma(color).luminance();
 
     // Adjust for very dark or very bright colors
@@ -215,7 +223,9 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: any,
+                                      sender: MessageSender,
+                                      sendResponse: (response?: any) => void): boolean => {
     if (message.action === "convertSelectionToPinyin") {
         console.log("HERE");
         injectStyles();
@@ -223,4 +233,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({result: "Conversion started", nodesFound: nodesFound});
         return true; // Keep message channel open for async response
     }
+    return false;
 });
