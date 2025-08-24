@@ -3,15 +3,29 @@ const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
-        content: './content.js',
-        background: './background.js'
+        content: './content.ts',
+        background: './background.ts'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js'
+        filename: '[name].js',
+        clean: true
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
     },
     module: {
         rules: [
+            {
+                test: /\.ts$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'ts-loader',
+                    options: {
+                        transpileOnly: false,
+                    }
+                }
+            },
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
@@ -21,7 +35,8 @@ module.exports = {
                         presets: [
                             ["@babel/preset-env", {
                                 "targets": "defaults"
-                            }]
+                            }],
+                            "@babel/preset-typescript"
                         ]
                     },
                 },
