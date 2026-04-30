@@ -1,6 +1,7 @@
 // content.js
 import chroma from "chroma-js";
 import MessageSender = chrome.runtime.MessageSender;
+import {PinyinBatchResponse} from "./background";
 
 interface PinyinNode {
     node: Node;
@@ -19,7 +20,7 @@ function findTextNodes(element: Node): number {
         element,
         NodeFilter.SHOW_TEXT,
         {
-            acceptNode: function (node: Node): number {
+            acceptNode: node => {
                 // Only include text nodes not contained within a 'pinyinOverlayText' span
                 let ancestor: Node | null = node.parentNode;
                 while (ancestor && ancestor !== document) {
@@ -142,9 +143,9 @@ function processPinyinBatchWithYield() {
                 parentColor: window.getComputedStyle(data.parent as Element).color
             }))
         },
-        response => {
+        (response: PinyinBatchResponse) => {
             if (!response || response.error) {
-                console.error("Error processing batch:", response?.error || "No response");
+                console.error("Error processing batch:", response?.error ?? "No response");
 
                 // Continue processing with the next batch
                 setTimeout(processPinyinBatchWithYield, PINYIN_UI_REFRESH_DELAY);
@@ -153,25 +154,27 @@ function processPinyinBatchWithYield() {
 
             // Apply results to nodes
             const results = response.results;
-            nodesToProcess.forEach((nodeData, i) => {
-                const htmlContent = results[i];
+            if (results) {
+                nodesToProcess.forEach((nodeData, i) => {
+                    const htmlContent = results[i];
 
-                // Skip if node is no longer in DOM
-                if (!nodeData.node.parentNode) {
-                    return;
-                }
-
-                // Create and insert processed content
-                if (htmlContent) {
-                    try {
-                        const fragment = document.createRange().createContextualFragment(htmlContent);
-                        nodeData.parent.replaceChild(fragment, nodeData.node);
-                        pinyinProcessedCount++;
-                    } catch (e) {
-                        console.error("Error replacing node:", e);
+                    // Skip if node is no longer in DOM
+                    if (!nodeData.node.parentNode) {
+                        return;
                     }
-                }
-            });
+
+                    // Create and insert processed content
+                    if (htmlContent) {
+                        try {
+                            const fragment = document.createRange().createContextualFragment(htmlContent);
+                            nodeData.parent.replaceChild(fragment, nodeData.node);
+                            pinyinProcessedCount++;
+                        } catch (e: unknown) {
+                            console.error("Error replacing node:", e);
+                        }
+                    }
+                });
+            }
 
             // Yield to UI thread before continuing
             setTimeout(processPinyinBatchWithYield, PINYIN_UI_REFRESH_DELAY);
@@ -223,9 +226,12 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
-chrome.runtime.onMessage.addListener((message: any,
-                                      sender: MessageSender,
-                                      sendResponse: (response?: any) => void): boolean => {
+chrome.runtime.onMessage.addListener((message: { action: "convertSelectionToPinyin" },
+                                      _sender: MessageSender,
+                                      sendResponse: (response?: {
+                                          result: string,
+                                          nodesFound: number
+                                      }) => void): boolean => {
     if (message.action === "convertSelectionToPinyin") {
         console.log("HERE");
         injectStyles();

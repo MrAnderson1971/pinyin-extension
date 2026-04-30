@@ -3,6 +3,11 @@ import {adjustColor, detectChinese, excludeChinese} from "./content";
 import pinyin from "pinyin";
 import MessageSender = chrome.runtime.MessageSender;
 
+export interface PinyinBatchResponse {
+    results?: string[];
+    error?: string;
+}
+
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "convertToPinyin",
@@ -22,13 +27,14 @@ function injectAndConvert(tab: chrome.tabs.Tab | undefined) {
     }, () => {
         // After injecting the script, send a message to it
         if (tab.id != null) {
-            chrome.tabs.sendMessage(tab.id, {action: "convertSelectionToPinyin"});
+            chrome.tabs.sendMessage(tab.id, {action: "convertSelectionToPinyin"})
+                .catch(err => console.warn("Pinyin conversion triggered before page was ready:", err));
         }
     });
 }
 
 // Run the extension script when the user clicks on the context menu option.
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener((_info, tab) => {
     injectAndConvert(tab);
 });
 
@@ -37,13 +43,17 @@ chrome.action.onClicked.addListener((tab) => {
     injectAndConvert(tab);
 });
 
-chrome.runtime.onMessage.addListener((request: any,
-                                      sender: MessageSender,
-                                      sendResponse: (response?: any) => void): boolean => {
+chrome.runtime.onMessage.addListener((request: {
+                                          action: 'processPinyinBatch';
+                                          textBatch: string[];
+                                          nodeInfo: { parentColor: string }[];
+                                      },
+                                      _sender: MessageSender,
+                                      sendResponse: (response?: PinyinBatchResponse) => void): boolean => {
     // Handle batch processing of text nodes
     if (request.action === 'processPinyinBatch') {
         const textBatch = request.textBatch;
-        const nodeInfo = request.nodeInfo || [];
+        const nodeInfo = request.nodeInfo ?? [];
 
         if (!textBatch || !Array.isArray(textBatch)) {
             sendResponse({error: 'Invalid batch'});
@@ -53,7 +63,7 @@ chrome.runtime.onMessage.addListener((request: any,
         try {
             // Process each text in the batch
             const results = textBatch.map((text, index) => {
-                const parentColor = nodeInfo[index]?.parentColor || '#000000';
+                const parentColor = nodeInfo[index]?.parentColor ?? '#000000';
                 const lessSaturatedColor = adjustColor(parentColor);
 
                 // Process the text to generate HTML with pinyin
@@ -61,9 +71,11 @@ chrome.runtime.onMessage.addListener((request: any,
             });
 
             sendResponse({results: results});
-        } catch (error: any) {
-            console.error('Error processing pinyin batch:', error);
-            sendResponse({error: error.message});
+        } catch (error) {
+            if (error instanceof Error) {
+                console.error('Error processing pinyin batch:', error);
+                sendResponse({error: error.message});
+            }
         }
 
         return true; // Keep message channel open
